@@ -1,0 +1,86 @@
+---
+title: "Project_610"
+output: html_document
+date: "2023-04-09"
+---
+```{r, warning=FALSE, message=FALSE, echo = FALSE}
+#load packages
+library(dplyr)
+library(plyr)
+library(ggplot2)
+library(readr)
+library(haven)
+library(ggplot2)
+library(ggplot2movies)
+library(plyr)
+library(knitr)
+library(tidyr)
+```
+
+```{r}
+proj_initial <- read_xpt("LLCP2021.XPT")
+```
+
+
+```{r}
+proj_data <- select(proj_initial, SEXVAR,INCOME3, ECIGNOW1, CHCCOPD3 )
+```
+
+
+```{r}
+#proj <- select(proj_initial, SMOKE100, ECIGNOW1,  CNCRTYP1, ASTHNOW) %>% filter(!is.na(ECIGNOW1)) %>%  filter(SMOKE100 == "1") %>%  filter(ECIGNOW1 == "2") %>% filter(ASTHNOW == "1")
+```
+
+```{r}
+proj_data$ECIGNOW1 = as.factor(proj_data$ECIGNOW1)
+levels(proj_data$ECIGNOW1)
+
+proj_data$ECIGNOW1 = mapvalues(proj_data$ECIGNOW1,
+                           from = levels(proj_data$ECIGNOW1),
+to = c(rep(1, 2),rep(2,2), rep(3, 2)))
+
+
+proj_data <- proj_data %>% mutate(ECIGNOW1 = ifelse(ECIGNOW1 == "3", NA, ECIGNOW1))
+
+```
+
+
+```{r}
+proj_data$CHCCOPD3 = as.factor(proj_data$CHCCOPD3)
+levels(proj_data$CHCCOPD3)
+
+proj_data$CHCCOPD3 = mapvalues(proj_data$CHCCOPD3,
+                           from = levels(proj_data$CHCCOPD3),
+to = c(rep(1, 1),rep(2,1), rep(3, 2)))
+
+proj_data <- proj_data %>% mutate(CHCCOPD3 = ifelse(CHCCOPD3 == "3", NA, CHCCOPD3))
+```
+
+
+```{r}
+ecig_copd_data <- proj_data %>%
+  filter(!is.na(ECIGNOW1) & !is.na(CHCCOPD3)) %>%
+  group_by(ECIGNOW1, CHCCOPD3) %>% 
+  dplyr::summarise(n = n())
+
+
+
+ecig_copd_table <- table(ecig_copd_data)
+ecig_copd_table
+
+```
+
+```{r}
+
+ggplot(ecig_copd_data, aes(x = ECIGNOW1, y = CHCCOPD3)) +
+  geom_bar(stat="identity") +
+  labs(x = "CIGGI", y = "Count") +
+  ggtitle("Stacked Bar Chart of Two Binary Variables")
+
+```
+
+```{r}
+ecig_copd_chi <- chisq.test(ecig_copd_table)
+ecig_copd_chi
+```
+
